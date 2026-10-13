@@ -60,6 +60,40 @@ router.get("/produtos/:id", (req, res) => {
   return res.render("produto-detalhe", { produto: product });
 });
 
+router.post("/carrinho/adicionar", (req, res, next) => {
+  const productId = Number(req.body.produto_id);
+  const quantity = Number(req.body.quantidade);
+
+  if (
+    !Number.isSafeInteger(productId) ||
+    productId < 1 ||
+    !Number.isSafeInteger(quantity) ||
+    quantity < 1
+  ) {
+    return res.status(400).send("Produto ou quantidade inválidos.");
+  }
+
+  const product = getProductById.get(productId);
+  if (!product) {
+    return res.status(404).send("Produto não encontrado.");
+  }
+
+  const cart = req.session.cart ?? {};
+  const updatedQuantity = Number(cart[productId] ?? 0) + quantity;
+  if (updatedQuantity > product.estoque) {
+    return res.status(409).send("Quantidade solicitada maior que o estoque.");
+  }
+
+  req.session.cart = { ...cart, [productId]: updatedQuantity };
+  req.session.save((error) => {
+    if (error) {
+      return next(error);
+    }
+
+    return res.redirect(303, "/carrinho");
+  });
+});
+
 router.get("/categorias", (req, res) => {
   res.render("categorias", { categorias: getCategories.all() });
 });
@@ -73,7 +107,18 @@ router.get("/cadastro", (req, res) => {
 });
 
 router.get("/carrinho", (req, res) => {
-  res.render("carrinho", { itens: [], total: 0 });
+  const itens = Object.entries(req.session.cart ?? {})
+    .map(([productId, quantity]) => {
+      const product = getProductById.get(Number(productId));
+      return product ? { ...product, quantidade: Number(quantity) } : null;
+    })
+    .filter(Boolean);
+  const total = itens.reduce(
+    (sum, item) => sum + Number(item.preco) * item.quantidade,
+    0,
+  );
+
+  res.render("carrinho", { itens, total });
 });
 
 export { router };

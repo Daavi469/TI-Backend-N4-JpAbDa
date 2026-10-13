@@ -1,4 +1,5 @@
 import express from "express";
+import session from "express-session";
 import { fileURLToPath } from "node:url";
 import { router as viewRouter } from "./routes/view_routes.js";
 import { router as apiRouter } from "./routes/api_routes.js";
@@ -14,6 +15,14 @@ app.set("views", fileURLToPath(new URL("../views/", import.meta.url)));
 app.use(mcors);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "local-development-secret-change-me",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { httpOnly: true, sameSite: "lax", secure: false },
+  }),
+);
 app.use(express.static(fileURLToPath(new URL("../public/", import.meta.url))));
 app.use(mdebug);
 
