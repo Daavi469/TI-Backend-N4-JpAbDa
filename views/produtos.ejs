@@ -1,0 +1,40 @@
+<%- include("partials/header", {title:"Produtos"}) %>
+
+<section class="heading">
+	<p class="tag">CATÁLOGO</p>
+	<h1>Todos os produtos</h1>
+	<p>Figuras, acessórios, colecionáveis e muito mais.</p>
+</section>
+
+<form class="search" action="/produtos" method="GET">
+	<input name="busca" value="<%= busca || '' %>" placeholder="Buscar produto pelo nome...">
+	<button class="btn">Buscar</button>
+</form>
+
+<section class="grid">
+	<% if(produtos && produtos.length){ %>
+		<% produtos.forEach(p => { %>
+			<article class="card">
+				<div class="photo">
+					<% if(p.imagem_url){ %>
+						<img src="<%= p.imagem_url %>" alt="<%= p.nome %>">
+					<% } else { %>
+						🛍️
+					<% } %>
+				</div>
+				<div class="inside">
+					<small><%= p.categoria_nome || "Sem categoria" %></small>
+					<h3><%= p.nome %></h3>
+					<p><%= p.descricao || "Produto da coleção Geek Store." %></p>
+					<p class="price">R$ <%= Number(p.preco || 0).toFixed(2).replace(".", ",") %></p>
+					<p class="muted">Estoque: <%= p.estoque ?? "Consulte" %></p>
+					<a class="btn" href="/produtos/<%= p.id %>">Ver detalhes</a>
+				</div>
+			</article>
+		<% }) %>
+	<% } else { %>
+		<p class="empty">Nenhum produto encontrado.</p>
+	<% } %>
+</section>
+
+<%- include("partials/footer") %>

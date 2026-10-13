@@ -1,0 +1,36 @@
+<%- include("partials/header", {title:"Carrinho"}) %>
+
+<section class="heading">
+	<p class="tag">SUA SELEÇÃO</p>
+	<h1>Carrinho de compras</h1>
+</section>
+
+<% if(itens && itens.length){ %>
+	<section class="cart">
+		<% itens.forEach(item => { %>
+			<article class="cart-item">
+				<div>
+					<h3><%= item.nome %></h3>
+					<p class="muted">Quantidade: <%= item.quantidade %></p>
+				</div>
+				<strong class="price">
+					R$ <%= (Number(item.preco||0)*Number(item.quantidade||0)).toFixed(2).replace(".",",") %>
+				</strong>
+				<form action="/carrinho/remover" method="POST">
+					<input type="hidden" name="produto_id" value="<%= item.id %>">
+					<button class="remove">Remover</button>
+				</form>
+			</article>
+		<% }) %>
+	</section>
+
+	<p class="total">Total: R$ <%= Number(total||0).toFixed(2).replace(".",",") %></p>
+	<form action="/finalizar-compra" method="POST">
+		<button class="btn">Finalizar compra</button>
+	</form>
+<% } else { %>
+	<p class="empty">Seu carrinho está vazio.</p>
+	<a class="btn" href="/produtos">Ver produtos</a>
+<% } %>
+
+<%- include("partials/footer") %>

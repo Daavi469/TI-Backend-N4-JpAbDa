@@ -1,0 +1,24 @@
+<%- include("partials/header", {title:"Categorias"}) %>
+
+<section class="heading">
+	<p class="tag">EXPLORE POR UNIVERSO</p>
+	<h1>Categorias</h1>
+</section>
+
+<section class="grid">
+	<% if(categorias && categorias.length){ %>
+		<% categorias.forEach(c => { %>
+			<a class="card category" href="/produtos?categoria_id=<%= c.id %>">
+				<div class="inside">
+					<p class="tag">✦ GEEK STORE</p>
+					<h2><%= c.nome %></h2>
+					<p><%= c.descricao || "Produtos selecionados desta categoria." %></p>
+				</div>
+			</a>
+		<% }) %>
+	<% } else { %>
+		<p class="empty">Nenhuma categoria cadastrada.</p>
+	<% } %>
+</section>
+
+<%- include("partials/footer") %>

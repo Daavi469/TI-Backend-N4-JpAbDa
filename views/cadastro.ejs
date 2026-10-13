@@ -1,0 +1,30 @@
+<%- include("partials/header", {title:"Cadastro"}) %>
+
+<section class="form-card">
+	<p class="tag">FAÇA PARTE DA COMUNIDADE</p>
+	<h1>Criar conta</h1>
+
+	<% if(erro){ %>
+		<p class="alert"><%= erro %></p>
+	<% } %>
+
+	<form action="/cadastro" method="POST" class="form">
+		<label>
+			Nome completo
+			<input name="nome" required>
+		</label>
+		<label>
+			E-mail
+			<input type="email" name="email" required>
+		</label>
+		<label>
+			Senha
+			<input type="password" name="senha" minlength="8" required>
+		</label>
+		<button class="btn">Criar conta</button>
+	</form>
+
+	<p class="muted">Sua conta poderá acompanhar compras e nível de fidelidade.</p>
+</section>
+
+<%- include("partials/footer") %>
