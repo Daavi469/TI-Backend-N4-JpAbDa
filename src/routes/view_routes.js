@@ -94,6 +94,42 @@ router.post("/carrinho/adicionar", (req, res, next) => {
   });
 });
 
+router.post("/carrinho/remover", (req, res, next) => {
+  const productId = Number(req.body.produto_id);
+  const quantity = Number(req.body.quantidade);
+
+  if (
+    !Number.isSafeInteger(productId) ||
+    productId < 1 ||
+    !Number.isSafeInteger(quantity) ||
+    quantity < 1
+  ) {
+    return res.status(400).send("Produto ou quantidade inválidos.");
+  }
+
+  const cart = { ...(req.session.cart ?? {}) };
+  const currentQuantity = Number(cart[productId] ?? 0);
+  if (quantity > currentQuantity) {
+    return res.status(400).send("Quantidade maior que a existente no carrinho.");
+  }
+
+  const remainingQuantity = currentQuantity - quantity;
+  if (remainingQuantity > 0) {
+    cart[productId] = remainingQuantity;
+  } else {
+    delete cart[productId];
+  }
+
+  req.session.cart = cart;
+  req.session.save((error) => {
+    if (error) {
+      return next(error);
+    }
+
+    return res.redirect(303, "/carrinho");
+  });
+});
+
 router.get("/categorias", (req, res) => {
   res.render("categorias", { categorias: getCategories.all() });
 });

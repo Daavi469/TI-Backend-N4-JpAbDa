@@ -18,6 +18,10 @@
 				</strong>
 				<form action="/carrinho/remover" method="POST">
 					<input type="hidden" name="produto_id" value="<%= item.id %>">
+					<label>
+						Qtd. a remover
+						<input type="number" name="quantidade" min="1" max="<%= item.quantidade %>" value="1" required>
+					</label>
 					<button class="remove">Remover</button>
 				</form>
 			</article>
