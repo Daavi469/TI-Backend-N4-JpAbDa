@@ -4,11 +4,17 @@ export const mdebug = (request, response, next) => {
     dateStyle: "short",
     timeStyle: "short",
   });
+  const body = { ...request.body };
+  for (const key of Object.keys(body)) {
+    if (/senha|password/i.test(key)) {
+      body[key] = "[REDACTED]";
+    }
+  }
 
   console.log();
   console.log(`[${now}] IP: ${request.ip}`);
   console.log(`Método HTTP: ${request.method} URL: ${request.url}`);
-  console.log("Body:", request.body);
+  console.log("Body:", body);
 
   next(); // para ir adiante
 };

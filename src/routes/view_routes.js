@@ -1,7 +1,10 @@
 import { Router } from "express";
+import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
 import database from "../database.js";
 
 const router = Router();
+const scryptAsync = promisify(scrypt);
 
 const productQuery = `
   SELECT
@@ -24,6 +27,33 @@ const getCategories = database.prepare(`
   FROM categoria
   ORDER BY nome
 `);
+const getCustomerByEmail = database.prepare(`
+  SELECT id_cliente, nome, email, senha
+  FROM cliente
+  WHERE email = ?
+`);
+const createCustomer = database.prepare(`
+  INSERT INTO cliente (nome, email, senha)
+  VALUES (?, ?, ?)
+`);
+
+async function hashPassword(password) {
+  const salt = randomBytes(16).toString("hex");
+  const derivedKey = await scryptAsync(password, salt, 64);
+  return `scrypt$${salt}$${derivedKey.toString("hex")}`;
+}
+
+async function verifyPassword(password, storedPassword) {
+  const [algorithm, salt, hash] = storedPassword.split("$");
+  if (algorithm !== "scrypt" || !salt || !hash) {
+    // Existing sample accounts store their passwords as plain text.
+    return password === storedPassword;
+  }
+
+  const expected = Buffer.from(hash, "hex");
+  const actual = await scryptAsync(password, salt, expected.length);
+  return expected.length === actual.length && timingSafeEqual(expected, actual);
+}
 
 router.get("/", (req, res) => {
   res.render("index", { produtos: getProducts.all().slice(0, 4) });
@@ -135,11 +165,73 @@ router.get("/categorias", (req, res) => {
 });
 
 router.get("/login", (req, res) => {
-  res.render("login", { erro: null });
+  res.render("login", { erro: null, sucesso: null });
 });
 
 router.get("/cadastro", (req, res) => {
-  res.render("cadastro", { erro: null });
+  res.render("cadastro", { erro: null, sucesso: null });
+});
+
+router.post("/cadastro", async (req, res) => {
+  const nome = typeof req.body.nome === "string" ? req.body.nome.trim() : "";
+  const email =
+    typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+  const senha = typeof req.body.senha === "string" ? req.body.senha : "";
+
+  if (!nome || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || senha.length < 8) {
+    return res.status(400).render("cadastro", {
+      erro: "Informe nome, e-mail válido e senha com pelo menos 8 caracteres.",
+      sucesso: null,
+    });
+  }
+
+  if (getCustomerByEmail.get(email)) {
+    return res.status(409).render("cadastro", {
+      erro: "Já existe uma conta cadastrada com esse e-mail.",
+      sucesso: null,
+    });
+  }
+
+  const hashedPassword = await hashPassword(senha);
+  if (getCustomerByEmail.get(email)) {
+    return res.status(409).render("cadastro", {
+      erro: "Já existe uma conta cadastrada com esse e-mail.",
+      sucesso: null,
+    });
+  }
+
+  createCustomer.run(nome, email, hashedPassword);
+  console.log("Cadastro realizado:", JSON.stringify({ nome, email }));
+  return res.render("cadastro", {
+    erro: null,
+    sucesso: "Conta criada com sucesso! Você já pode entrar.",
+  });
+});
+
+router.post("/login", async (req, res, next) => {
+  const email =
+    typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+  const senha = typeof req.body.senha === "string" ? req.body.senha : "";
+  const customer = getCustomerByEmail.get(email);
+
+  if (!customer || !(await verifyPassword(senha, customer.senha))) {
+    return res.status(401).render("login", {
+      erro: "E-mail ou senha inválidos.",
+      sucesso: null,
+    });
+  }
+
+  req.session.user = { id: customer.id_cliente, nome: customer.nome };
+  req.session.save((error) => {
+    if (error) {
+      return next(error);
+    }
+
+    return res.render("login", {
+      erro: null,
+      sucesso: "Entrada realizada com sucesso!",
+    });
+  });
 });
 
 router.get("/carrinho", (req, res) => {

@@ -7,6 +7,9 @@
 	<% if(erro){ %>
 		<p class="alert"><%= erro %></p>
 	<% } %>
+	<% if(sucesso){ %>
+		<p class="success"><%= sucesso %></p>
+	<% } %>
 
 	<form action="/login" method="POST" class="form">
 		<label>

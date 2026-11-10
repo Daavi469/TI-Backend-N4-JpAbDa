@@ -199,6 +199,11 @@ input {
   background: #512536;
   border-radius: 8px;
 }
+.success {
+  padding: 10px;
+  background: #174b3a;
+  border-radius: 8px;
+}
 .empty {
   padding: 25px;
   border: 1px dashed var(--border);
